@@ -22,7 +22,9 @@ public class ClientRound
             // Connect to the server.
             client = new TcpClient(IP_ADDRESS_STR, PORT);
             clientStream = client.GetStream();
-            TCPHandler tcpHandler = new(clientStream);
+            var tcpHandler = new TCPHandler(clientStream);
+
+
 
             // Receive id and START.
             var startMessage = tcpHandler.ReceiveStructure<StartMessage>();
@@ -31,11 +33,13 @@ public class ClientRound
 
             if (String.Compare(START_STR, startMessage.Message) != 0)
                 throw new StartMessageNotReceivedException("Haven't received START message.");
+
             
             // Send a number.
             player.DrawNumber();
-
             tcpHandler.SendStructure<GameNumber>(new(player.GameNumber));
+
+
 
             // Receive a result.
             var result = tcpHandler.ReceiveStructure<Result>();
@@ -48,15 +52,15 @@ public class ClientRound
         }
         catch (ArgumentNullException e)
         {
-            Console.WriteLine("ArgumentNullException: ", e.Message);
+            Console.Error.WriteLine("ArgumentNullException: ", e.Message);
         }
         catch (SocketException e)
         {
-            Console.WriteLine("SocketException: ", e.Message);
+            Console.Error.WriteLine("SocketException: ", e.Message);
         }
         catch (StartMessageNotReceivedException e)
         {
-            Console.WriteLine(e.Message);
+            Console.Error.WriteLine(e.Message);
         }
         finally
         {

@@ -42,7 +42,7 @@ public class ServerRound
             await Task.WhenAll(getNumbers);
             
             // Send the result.
-            Result result = new (Resolve(players[0], players[1]));
+            var result = new Result(Resolve(players[0], players[1]));
             var sendResults = new List<Task>();
             players.ForEach(player => sendResults.Add(SendResult(server, player, result)));
             await Task.WhenAll(sendResults);
@@ -50,11 +50,11 @@ public class ServerRound
         }
         catch (SocketException e)
         {
-            Console.WriteLine("SocketException: " + e.Message);
+            Console.Error.WriteLine("SocketException: " + e.Message);
         }
         catch (NullReferenceException e)
         {
-            Console.WriteLine("Error in receiving a number: " + e.Message);
+            Console.Error.WriteLine("Error in receiving a number: " + e.Message);
         }
         finally
         {

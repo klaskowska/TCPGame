@@ -11,7 +11,7 @@ public class Player
 
     public void DrawNumber()
     {
-        Random random = new ();
+        var random = new Random();
         GameNumber = random.Next();
     }
 }
