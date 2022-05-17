@@ -11,7 +11,6 @@ public class ClientRound
 
     private Player? player;
 
-
     public void Run()
     {
         TcpClient? client = null;
@@ -25,34 +24,20 @@ public class ClientRound
             var tcpHandler = new TCPHandler(clientStream);
 
 
+            ReceiveStartMessage(tcpHandler);
 
-            // Receive id and START.
-            var startMessage = tcpHandler.ReceiveStructure<StartMessage>();
+            SendNumber(tcpHandler);
 
-            player = new (startMessage.PlayerId);
+            ReceiveResult(tcpHandler);
 
-            if (String.Compare(START_STR, startMessage.Message) != 0)
-                throw new StartMessageNotReceivedException("Haven't received START message.");
-
-            
-            // Send a number.
-            player.DrawNumber();
-            tcpHandler.SendStructure<GameNumber>(new(player.GameNumber));
-
-
-
-            // Receive a result.
-            var result = tcpHandler.ReceiveStructure<Result>();
-
-            if (result.PlayerId == player.Id)
-                Console.WriteLine("I am the winner!");
-            else
-                Console.WriteLine("I lost :(");
-            
         }
         catch (ArgumentNullException e)
         {
             Console.Error.WriteLine("ArgumentNullException: ", e.Message);
+        }
+        catch (NullReferenceException e)
+        {
+            Console.Error.WriteLine("NullReferenceException: " + e);
         }
         catch (SocketException e)
         {
@@ -70,7 +55,47 @@ public class ClientRound
                 client.Close();
         }
     }
+
+    private void ReceiveStartMessage(TCPHandler tcpHandler)
+    {
+        var startMessage = tcpHandler.ReceiveStructure<StartMessage>();
+
+        player = new (startMessage.PlayerId);
+
+        if (String.Compare(START_STR, startMessage.Message) != 0)
+            throw new StartMessageNotReceivedException("Haven't received START message.");
+    }
+
+    private void SendNumber(TCPHandler tcpHandler)
+    {
+        if (player is null)
+            throw new NullReferenceException();
+
+        player.DrawNumber();
+        tcpHandler.SendStructure<GameNumber>(new(player.GameNumber));
+    }
+
+    private void ReceiveResult(TCPHandler tcpHandler)
+    {
+        if (player is null)
+            throw new NullReferenceException();
+
+        var result = tcpHandler.ReceiveStructure<Result>();
+
+        if (result.PlayerId == player.Id)
+            Console.WriteLine("I am the winner!");
+        else
+            Console.WriteLine("I lost :(");
+    }
+
+    private int a()
+    {
+        return 1;
+    }
+    
 }
+
+
 
 public class StartMessageNotReceivedException : Exception
 {

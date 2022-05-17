@@ -2,7 +2,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-
+namespace Common;
 public class TCPHandler
 {
     private const int BUFFER_SIZE = 1024;
