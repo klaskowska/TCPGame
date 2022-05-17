@@ -12,7 +12,7 @@ public class ServerRound
 
     private const int BUFFER_SIZE = 256;
 
-    public async void Run()
+    public void Run()
     {
         TcpListener? server = null;
 
@@ -23,6 +23,7 @@ public class ServerRound
             // Run server.
             server = new TcpListener(serverAddress, PORT);
             server.Start();
+            
 
             // Get connection from two clients.
             var players = new List<ConnectedPlayer>()
@@ -31,21 +32,14 @@ public class ServerRound
                 new (1, server.AcceptTcpClient())
             };
 
-            // Send ids to the players and start the game.
-            var startActions = new List<Task>();
-            players.ForEach(player => startActions.Add(StartGame(server, player)));
-            await Task.WhenAll(startActions);
 
-            // Get the numbers.
-            var getNumbers = new List<Task>();
-            players.ForEach(player => getNumbers.Add(GetNumber(server, player)));
-            await Task.WhenAll(getNumbers);
+            // Run the game.
+            RunForAllAsync(server, players, StartGame);
+
+            RunForAllAsync(server, players, GetNumber);
             
-            // Send the result.
             var result = new Result(Resolve(players[0], players[1]));
-            var sendResults = new List<Task>();
-            players.ForEach(player => sendResults.Add(SendResult(server, player, result)));
-            await Task.WhenAll(sendResults);
+            RunForAllAsync(server, players, result, SendResult);
 
         }
         catch (SocketException e)
@@ -62,6 +56,20 @@ public class ServerRound
                 server.Stop();
         }
         
+    }
+
+    private async void RunForAllAsync(TcpListener server, List<ConnectedPlayer> players, Func<TcpListener, ConnectedPlayer, Task> func)
+    {
+        var tasks = new List<Task>();
+        players.ForEach(player => tasks.Add(func(server, player)));
+        await Task.WhenAll(tasks);
+    }
+
+    private async void RunForAllAsync(TcpListener server, List<ConnectedPlayer> players, Result result, Func<TcpListener, ConnectedPlayer, Result, Task> func)
+    {
+        var tasks = new List<Task>();
+        players.ForEach(player => tasks.Add(func(server, player, result)));
+        await Task.WhenAll(tasks);
     }
 
     private Task StartGame(TcpListener server, ConnectedPlayer player)
